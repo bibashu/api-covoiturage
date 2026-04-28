@@ -18,6 +18,7 @@ import { Booking } from './bookings/entities/bookings.entity';
 import { Message } from './messages/entities/message.entity';
 import { Review } from './reviews/entities/reviews.entity';
 import { Payment } from './payments/entities/payments.entity';
+import { TripStop } from './trips/entities/trip-stop.entity';
 
 @Module({
   imports: [
@@ -40,7 +41,7 @@ import { Payment } from './payments/entities/payments.entity';
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
 
-          entities: [User, Vehicle, Trip, Booking, Payment, Review, Message],
+          entities: [User, Vehicle, Trip, Booking, Payment, Review, Message, TripStop],
 
           synchronize: configService.get('NODE_ENV') !== 'production',
           logging: configService.get('NODE_ENV') === 'development',
@@ -57,6 +58,7 @@ import { Payment } from './payments/entities/payments.entity';
     VehiclesModule,
     NotificationsModule,
     ReviewsModule,
+    TripStop,
   ],
 })
 export class AppModule {}

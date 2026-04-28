@@ -1,0 +1,10 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+
+export class CancelBookingDto {
+  @ApiPropertyOptional({ example: 'Changement de programme.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}

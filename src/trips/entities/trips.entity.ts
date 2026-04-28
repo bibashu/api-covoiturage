@@ -5,18 +5,18 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
-
-import { Booking } from '../../bookings/entities/bookings.entity';
 import { Vehicle } from '../../vehicles/entities/vehicule.entity';
 
+import { Booking } from '../../bookings/entities/bookings.entity';
+import { TripStop } from './trip-stop.entity';
 
 export enum TripStatus {
-  DRAFT = 'draft',
-  PUBLISHED = 'published',
-  FULL = 'full',
+  DRAFT      = 'draft',
+  PUBLISHED  = 'published',
+  FULL       = 'full',
   IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  COMPLETED  = 'completed',
+  CANCELLED  = 'cancelled',
 }
 
 @Entity('trips')
@@ -24,14 +24,14 @@ export class Trip {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   driverId!: string;
 
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'driverId' })
   driver!: User;
 
-  @Column()
+  @Column({ type: 'varchar' })
   vehicleId!: string;
 
   @ManyToOne(() => Vehicle, { eager: true })
@@ -39,19 +39,19 @@ export class Trip {
   vehicle!: Vehicle;
 
   @ApiProperty({ example: 'Dakar' })
-  @Column({ length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   departureCity!: string;
 
   @ApiProperty({ example: 'Thiès' })
-  @Column({ length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   arrivalCity!: string;
 
   @ApiProperty({ example: 'Plateau, Dakar' })
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true, default: null })
   departureAddress!: string;
 
   @ApiProperty({ example: 'Centre-ville, Thiès' })
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true, default: null })
   arrivalAddress!: string;
 
   @ApiProperty({ example: 14.6928 })
@@ -75,11 +75,11 @@ export class Trip {
   departureTime!: Date;
 
   @ApiProperty({ example: '2026-05-01T09:00:00Z' })
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true, default: null })
   estimatedArrivalTime!: Date;
 
   @ApiProperty({ example: 3 })
-  @Column()
+  @Column({ type: 'int' })
   availableSeats!: number;
 
   @ApiProperty({ example: 2500 })
@@ -91,26 +91,26 @@ export class Trip {
   status!: TripStatus;
 
   @ApiProperty({ example: false })
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   smokingAllowed!: boolean;
 
-  @ApiProperty({ example: true })
-  @Column({ default: false })
+  @ApiProperty({ example: false })
+  @Column({ type: 'boolean', default: false })
   petsAllowed!: boolean;
 
-  @ApiProperty({ example: true })
-  @Column({ default: false })
+  @ApiProperty({ example: false })
+  @Column({ type: 'boolean', default: false })
   musicAllowed!: boolean;
 
-  @ApiProperty({ example: 'Je n\'accepte pas les bagages volumineux.' })
-  @Column({ type: 'text', nullable: true })
+  @ApiProperty({ example: 'Pas de bagages volumineux.' })
+  @Column({ type: 'text', nullable: true, default: null })
   description!: string;
 
-//   @OneToMany(() => TripStop, (stop) => stop.trip, {
-//     cascade: true,
-//     eager: true,
-//   })
-//   stops!: TripStop[];
+  @OneToMany(() => TripStop, (stop) => stop.trip, {
+    cascade: true,
+    eager: true,
+  })
+  stops!: TripStop[];
 
   @OneToMany(() => Booking, (booking) => booking.trip)
   bookings!: Booking[];
