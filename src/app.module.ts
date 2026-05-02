@@ -19,6 +19,7 @@ import { Message } from './messages/entities/message.entity';
 import { Review } from './reviews/entities/reviews.entity';
 import { Payment } from './payments/entities/payments.entity';
 import { TripStop } from './trips/entities/trip-stop.entity';
+import { Notification } from './notifications/entities/notification.entity';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { TripStop } from './trips/entities/trip-stop.entity';
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
 
-          entities: [User, Vehicle, Trip, Booking, Payment, Review, Message, TripStop],
+          entities: [User, Vehicle, Trip, Booking, Payment, Review, Message, TripStop, Notification],
 
           synchronize: configService.get('NODE_ENV') !== 'production',
           logging: configService.get('NODE_ENV') === 'development',
@@ -56,6 +57,7 @@ import { TripStop } from './trips/entities/trip-stop.entity';
     PaymentsModule,
     MessagesModule,
     VehiclesModule,
+    MessagesModule,
     NotificationsModule,
     ReviewsModule,
     TripStop,

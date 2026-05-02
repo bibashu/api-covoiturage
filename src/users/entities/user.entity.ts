@@ -79,6 +79,9 @@ export class User {
   @CreateDateColumn()
   createdAt!: Date;
 
+  @Column({ type: 'varchar', nullable: true, default: null })
+  fcmToken!: string;
+
   @UpdateDateColumn()
   updatedAt!: Date;
 

@@ -1,6 +1,10 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
-  ForbiddenException, ConflictException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +15,7 @@ import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { BookingResponseDto } from './dto/booking-response.dto';
 import { TripsService } from '../trips/trips.service';
 import { TripStatus } from '../trips/entities/trips.entity';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class BookingsService {
@@ -20,6 +25,7 @@ export class BookingsService {
     @InjectRepository(Booking)
     private readonly bookingRepo: Repository<Booking>,
     private readonly tripsService: TripsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ─── CREATE ───────────────────────────────────────────────────────────────
@@ -75,6 +81,13 @@ export class BookingsService {
     });
 
     const saved = await this.bookingRepo.save(booking);
+
+    await this.notificationsService.notifyBookingRequest(
+      trip.driverId,
+      `${saved.passenger.firstName} ${saved.passenger.lastName}`,
+      trip.id,
+      saved.id,
+    );
     this.logger.log(`Réservation créée : ${saved.id} par ${passengerId}`);
     return this.toDto(saved);
   }
@@ -143,11 +156,22 @@ export class BookingsService {
     // Décrémenter les places disponibles sur le trajet
     await this.tripsService.decrementSeats(booking.tripId, booking.seatsBooked);
 
+    await this.notificationsService.notifyBookingConfirmed(
+      booking.passengerId,
+      `${trip.driver.firstName} ${trip.driver.lastName}`,
+      booking.tripId,
+      booking.id,
+    );
+
     this.logger.log(`Réservation confirmée : ${id} par conducteur ${driverId}`);
     return this.toDto(saved);
   }
 
-  async reject(id: string, driverId: string, reason?: string): Promise<BookingResponseDto> {
+  async reject(
+    id: string,
+    driverId: string,
+    reason?: string,
+  ): Promise<BookingResponseDto> {
     const booking = await this.findOneOrFail(id);
     const trip = await this.tripsService.findOneOrFail(booking.tripId);
 
@@ -167,7 +191,11 @@ export class BookingsService {
     booking.cancellationReason = reason ?? 'Refusée par le conducteur.';
     booking.cancelledAt = new Date();
     const saved = await this.bookingRepo.save(booking);
-
+    await this.notificationsService.notifyBookingRejected(
+      booking.passengerId,
+      `${trip.driver.firstName} ${trip.driver.lastName}`,
+      booking.id,
+    );
     this.logger.log(`Réservation refusée : ${id}`);
     return this.toDto(saved);
   }
@@ -206,7 +234,10 @@ export class BookingsService {
 
     // Libérer les places uniquement si la réservation était confirmée
     if (wasConfirmed) {
-      await this.tripsService.incrementSeats(booking.tripId, booking.seatsBooked);
+      await this.tripsService.incrementSeats(
+        booking.tripId,
+        booking.seatsBooked,
+      );
     }
 
     this.logger.log(`Réservation annulée par passager : ${id}`);
@@ -247,9 +278,17 @@ export class BookingsService {
     const saved = await this.bookingRepo.save(booking);
 
     if (wasConfirmed) {
-      await this.tripsService.incrementSeats(booking.tripId, booking.seatsBooked);
+      await this.tripsService.incrementSeats(
+        booking.tripId,
+        booking.seatsBooked,
+      );
     }
-
+    await this.notificationsService.notifyBookingCancelled(
+      booking.passengerId,
+      `${trip.driver.firstName} ${trip.driver.lastName}`,
+      booking.id,
+      true, // byDriver = true
+    );
     this.logger.log(`Réservation annulée par conducteur : ${id}`);
     return this.toDto(saved);
   }

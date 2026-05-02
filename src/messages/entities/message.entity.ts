@@ -6,23 +6,27 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
 import { Booking } from '../../bookings/entities/bookings.entity';
 
+export enum MessageType {
+  TEXT  = 'text',
+  SYSTEM = 'system',  // Messages automatiques (confirmation, annulation…)
+}
 
 @Entity('messages')
 export class Message {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   bookingId!: string;
 
   @ManyToOne(() => Booking, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'bookingId' })
   booking!: Booking;
 
-  @Column()
+  @Column({ type: 'varchar' })
   senderId!: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'senderId' })
   sender!: User;
 
@@ -30,11 +34,15 @@ export class Message {
   @Column({ type: 'text' })
   content!: string;
 
+  @ApiProperty({ enum: MessageType })
+  @Column({ type: 'enum', enum: MessageType, default: MessageType.TEXT })
+  type!: MessageType;
+
   @ApiProperty({ example: false })
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isRead!: boolean;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true, default: null })
   readAt!: Date;
 
   @CreateDateColumn()
