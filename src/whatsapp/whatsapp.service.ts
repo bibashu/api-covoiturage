@@ -42,12 +42,12 @@ export class WhatsAppService {
     // language: { code:U this.lang },
   language: { code: 'en_US' },
     components: [
-      {
-        type: 'body',
-        parameters: [
-          { type: 'text', text: code },
-        ],
-      },
+      // {
+      //   type: 'body',
+      //   parameters: [
+      //     { type: 'text', text: code },
+      //   ],
+      // },
       // {
       //   type: 'button',
       //   sub_type: 'url',
