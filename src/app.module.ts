@@ -49,7 +49,7 @@ import { Notification } from './notifications/entities/notification.entity';
           ],
 
           synchronize: configService.get('NODE_ENV') !== 'production',
-          logging: configService.get('NODE_ENV') === 'development',
+         logging: process.env.NODE_ENV !== 'production',
           ssl: {
             rejectUnauthorized: false, 
           },
