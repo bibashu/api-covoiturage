@@ -50,6 +50,9 @@ import { Notification } from './notifications/entities/notification.entity';
 
           synchronize: configService.get('NODE_ENV') !== 'production',
           logging: configService.get('NODE_ENV') === 'development',
+          ssl: {
+            rejectUnauthorized: false, 
+          },
         };
       },
     }),
