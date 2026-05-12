@@ -1,57 +1,37 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { User } from '../../users/entities/user.entity';
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(
-  Strategy,
-  'jwt-refresh',
-) {
+export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
     config: ConfigService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) {
-    const secret = config.get<string>('JWT_REFRESH_SECRET');
-
-    if (!secret) {
-      throw new Error('JWT_REFRESH_SECRET is missing');
-    }
-
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
-      secretOrKey: secret,
+      ignoreExpiration: false,
+      secretOrKey: config.get<string>('JWT_REFRESH_SECRET'),
       passReqToCallback: true,
-    });
+    } as StrategyOptionsWithRequest);
   }
 
   async validate(req: Request, payload: { sub: string }) {
     const refreshToken = req.body?.refreshToken;
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token manquant');
-    }
-
     const user = await this.userRepo.findOne({
       where: { id: payload.sub, isActive: true },
     });
+    if (!user?.refreshToken) throw new UnauthorizedException('Refresh token invalide.');
 
-    if (!user || !user.refreshToken) {
-      throw new UnauthorizedException('Refresh token invalide');
-    }
-
-    const isValid = await bcrypt.compare(refreshToken, user.refreshToken);
-
-    if (!isValid) {
-      throw new UnauthorizedException('Refresh token expiré');
-    }
-
+    const valid = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!valid) throw new UnauthorizedException('Refresh token expiré.');
     return user;
   }
 }

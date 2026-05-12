@@ -11,8 +11,9 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { BookingResponseDto } from './dto/booking-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
+
 import { User } from '../users/entities/user.entity';
+import { ApiAuthRequired } from '../auth/decorators/auth.decorators';
 
 @ApiTags('bookings')
 @ApiAuthRequired()

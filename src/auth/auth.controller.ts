@@ -1,82 +1,98 @@
 import {
-  Controller, Post, Get, Body,
-  UseGuards, HttpCode, HttpStatus, Patch,
+  Controller, Post, Patch, Get,
+  Body, HttpCode, HttpStatus, UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags, ApiOperation, ApiResponse, ApiBody,
+  ApiTags, ApiOperation, ApiResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-
-import { LoginDto } from './dto/login.dto';
-
+import {
+  SendOtpDto, VerifyOtpDto,
+  CompleteProfileDto, AuthResponseDto, RefreshTokenDto,
+} from './dto/auth.dto';
+import {
+  Public, SkipProfileCheck, ApiAuthRequired,
+} from './decorators/auth.decorators';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { ApiAuthRequired } from './decorators/api-auth.decorator';
 import { User } from '../users/entities/user.entity';
-import { AuthResponseDto, ChangePasswordDto, RefreshTokenDto } from './dto/response.dto';
-import { RegisterDto } from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // ─── Étape 1 ─────────────────────────────────────────────────────────────
   @Public()
-  @Post('register')
-  @ApiOperation({ summary: 'Créer un nouveau compte' })
-  @ApiResponse({ status: 201, type: AuthResponseDto })
-  @ApiResponse({ status: 409, description: 'Email déjà utilisé' })
-  register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authService.register(dto);
+  @Post('send-otp')
+  @ApiOperation({ summary: 'Étape 1 — Saisir le numéro → reçoit OTP WhatsApp' })
+  @ApiResponse({
+    status: 201,
+    schema: { properties: { message: { type: 'string' } } },
+  })
+  sendOtp(@Body() dto: SendOtpDto) {
+    return this.authService.sendOtp(dto);
   }
 
+  // ─── Étape 2 ─────────────────────────────────────────────────────────────
   @Public()
-  @Post('login')
+  @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Se connecter' })
+  @ApiOperation({ summary: 'Étape 2 — Vérifier le code OTP' })
   @ApiResponse({ status: 200, type: AuthResponseDto })
-  @ApiResponse({ status: 401, description: 'Identifiants incorrects' })
-  login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(dto);
+  @ApiResponse({ status: 400, description: 'Code invalide, expiré ou compte bloqué' })
+  verifyOtp(@Body() dto: VerifyOtpDto): Promise<AuthResponseDto> {
+    return this.authService.verifyOtp(dto);
   }
 
+  // ─── Étape 3 ─────────────────────────────────────────────────────────────
+  @SkipProfileCheck()
+  @ApiAuthRequired()
+  @Patch('complete-profile')
+  @ApiOperation({
+    summary: 'Étape 3 — Renseigner prénom + nom (token étape 2 requis)',
+  })
+  @ApiResponse({ status: 200, type: AuthResponseDto })
+  completeProfile(
+    @Body() dto: CompleteProfileDto,
+    @CurrentUser() user: User,
+  ): Promise<AuthResponseDto> {
+    return this.authService.completeProfile(user.id, dto);
+  }
+
+  // ─── Renvoyer OTP ─────────────────────────────────────────────────────────
+  @Public()
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Renvoyer l\'OTP (min 60s entre deux envois)' })
+  resendOtp(@Body() dto: SendOtpDto) {
+    return this.authService.sendOtp(dto);
+  }
+
+  // ─── Refresh token ────────────────────────────────────────────────────────
   @Public()
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Renouveler le access token' })
-  @ApiBody({ type: RefreshTokenDto })
-  @ApiResponse({ status: 200, type: AuthResponseDto })
   refresh(@CurrentUser() user: User): Promise<AuthResponseDto> {
     return this.authService.refresh(user);
   }
 
+  // ─── Logout ───────────────────────────────────────────────────────────────
+  @ApiAuthRequired()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiAuthRequired()
-  @ApiOperation({ summary: 'Se déconnecter (invalide le refresh token)' })
-  @ApiResponse({ status: 204 })
-  logout(@CurrentUser() user: User): Promise<void> {
+  logout(@CurrentUser() user: User) {
     return this.authService.logout(user.id);
   }
 
+  // ─── Me ───────────────────────────────────────────────────────────────────
+  @SkipProfileCheck()
+  @ApiAuthRequired()
   @Get('me')
-  @ApiAuthRequired()
   @ApiOperation({ summary: 'Profil de l\'utilisateur connecté' })
-  @ApiResponse({ status: 200, type: User })
-  getProfile(@CurrentUser() user: User): Promise<User> {
-    return this.authService.getProfile(user.id);
-  }
-
-  @Patch('change-password')
-  @ApiAuthRequired()
-  @ApiOperation({ summary: 'Changer le mot de passe' })
-  @ApiResponse({ status: 200, description: 'Mot de passe modifié' })
-  changePassword(
-    @CurrentUser() user: User,
-    @Body() dto: ChangePasswordDto,
-  ) {
-    return this.authService.changePassword(user, dto);
+  getMe(@CurrentUser() user: User) {
+    return user;
   }
 }

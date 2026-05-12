@@ -12,10 +12,10 @@ import { UpdateTripDto } from './dto/update-trip.dto';
 import { SearchTripDto } from './dto/search-trip.dto';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
-import { Public } from '../auth/decorators/public.decorator';
+
 import { User } from '../users/entities/user.entity';
 import { TripResponseDto } from './dto/response-trip.dto';
+import { ApiAuthRequired, Public } from '../auth/decorators/auth.decorators';
 
 @ApiTags('trips')
 @ApiAuthRequired()

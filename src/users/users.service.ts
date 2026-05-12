@@ -85,7 +85,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepo.findOne({ where: { email, isActive: true } });
+    return this.userRepo.findOne({ where: { isActive: true } });
   }
 
   async getStats(userId: string): Promise<UserStats> {
@@ -124,52 +124,52 @@ export class UsersService {
     return this.toDto(saved);
   }
 
-  async updateEmail(
-    id: string,
-    dto: UpdateEmailDto,
-    requesterId: string,
-  ): Promise<UserResponseDto> {
-    const user = await this.findOneOrFail(id);
-    this.assertOwnerOrAdmin(user, requesterId);
+  // async updateEmail(
+  //   id: string,
+  //   dto: UpdateEmailDto,
+  //   requesterId: string,
+  // ): Promise<UserResponseDto> {
+  //   const user = await this.findOneOrFail(id);
+  //   this.assertOwnerOrAdmin(user, requesterId);
 
-    const valid = await user.validatePassword(dto.currentPassword);
-    if (!valid) {
-      throw new BadRequestException('Mot de passe incorrect.');
-    }
+  //   const valid = await user.validatePassword(dto.currentPassword);
+  //   if (!valid) {
+  //     throw new BadRequestException('Mot de passe incorrect.');
+  //   }
 
-    const exists = await this.userRepo.findOne({
-      where: { email: dto.email },
-    });
-    if (exists && exists.id !== id) {
-      throw new ConflictException('Cet email est déjà utilisé.');
-    }
+  //   const exists = await this.userRepo.findOne({
+  //     where: { email: dto.email },
+  //   });
+  //   if (exists && exists.id !== id) {
+  //     throw new ConflictException('Cet email est déjà utilisé.');
+  //   }
 
-    user.email = dto.email;
-    const saved = await this.userRepo.save(user);
-    return this.toDto(saved);
-  }
+  //   user.email = dto.email;
+  //   const saved = await this.userRepo.save(user);
+  //   return this.toDto(saved);
+  // }
 
-  async updatePassword(
-    id: string,
-    dto: UpdatePasswordDto,
-    requesterId: string,
-  ): Promise<{ message: string }> {
-    const user = await this.findOneOrFail(id);
-    this.assertOwnerOrAdmin(user, requesterId);
+  // async updatePassword(
+  //   id: string,
+  //   dto: UpdatePasswordDto,
+  //   requesterId: string,
+  // ): Promise<{ message: string }> {
+  //   const user = await this.findOneOrFail(id);
+  //   this.assertOwnerOrAdmin(user, requesterId);
 
-    const valid = await user.validatePassword(dto.currentPassword);
-    if (!valid) {
-      throw new BadRequestException('Mot de passe actuel incorrect.');
-    }
+  //   const valid = await user.validatePassword(dto.currentPassword);
+  //   if (!valid) {
+  //     throw new BadRequestException('Mot de passe actuel incorrect.');
+  //   }
 
-    user.password = dto.newPassword;
-    // @BeforeUpdate() dans l'entité hashera automatiquement
-    await this.userRepo.save(user);
-    // Invalide le refresh token pour forcer la reconnexion
-    await this.userRepo.update(id, { refreshToken: null as any });
+  //   user.password = dto.newPassword;
+  //   // @BeforeUpdate() dans l'entité hashera automatiquement
+  //   await this.userRepo.save(user);
+  //   // Invalide le refresh token pour forcer la reconnexion
+  //   await this.userRepo.update(id, { refreshToken: null as any });
 
-    return { message: 'Mot de passe modifié avec succès.' };
-  }
+  //   return { message: 'Mot de passe modifié avec succès.' };
+  // }
 
   // ─── PHOTO ────────────────────────────────────────────────────────────────
 
@@ -270,7 +270,7 @@ export class UsersService {
 
   async verify(id: string): Promise<UserResponseDto> {
     const user = await this.findOneOrFail(id);
-    user.isVerified = true;
+    user.isActive = true;
     const saved = await this.userRepo.save(user);
     return this.toDto(saved);
   }

@@ -10,8 +10,9 @@ import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
+
 import { User } from '../users/entities/user.entity';
+import { ApiAuthRequired } from '../auth/decorators/auth.decorators';
 
 class SaveFcmTokenDto {
   @ApiProperty({ example: 'fxS7Z...:APA91b...' })

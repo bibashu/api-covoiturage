@@ -28,10 +28,9 @@ import { UpdateUserDto, UpdateEmailDto, UpdatePasswordDto } from './dto/update-u
 import { QueryUsersDto } from './dto/query-users.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
 import { User, UserRole } from './entities/user.entity';
 import { multerConfig } from '../common/cloudinary/multer.config';
+import { ApiAuthRequired, Roles } from '../auth/decorators/auth.decorators';
 
 @ApiTags('users')
 @ApiAuthRequired()
@@ -103,15 +102,15 @@ export class UsersController {
     return this.usersService.update(id, dto, currentUser.id);
   }
 
-  @Patch('me/email')
-  @ApiOperation({ summary: 'Changer son adresse email (mot de passe requis)' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  updateEmail(
-    @Body() dto: UpdateEmailDto,
-    @CurrentUser() user: User,
-  ): Promise<UserResponseDto> {
-    return this.usersService.updateEmail(user.id, dto, user.id);
-  }
+  // @Patch('me/email')
+  // @ApiOperation({ summary: 'Changer son adresse email (mot de passe requis)' })
+  // @ApiResponse({ status: 200, type: UserResponseDto })
+  // updateEmail(
+  //   @Body() dto: UpdateEmailDto,
+  //   @CurrentUser() user: User,
+  // ): Promise<UserResponseDto> {
+  //   return this.usersService.updateEmail(user.id, dto, user.id);
+  // }
 
   @Patch('me/password')
   @ApiOperation({ summary: 'Changer son mot de passe' })
@@ -120,7 +119,7 @@ export class UsersController {
     @Body() dto: UpdatePasswordDto,
     @CurrentUser() user: User,
   ) {
-    return this.usersService.updatePassword(user.id, dto, user.id);
+    // return this.usersService.updatePassword(user.id, dto, user.id);
   }
 
   // ─── PHOTO ────────────────────────────────────────────────────────────────

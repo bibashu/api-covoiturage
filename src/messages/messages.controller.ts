@@ -10,8 +10,9 @@ import { MessagesService } from './messages.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
+
 import { User } from '../users/entities/user.entity';
+import { ApiAuthRequired } from '../auth/decorators/auth.decorators';
 
 @ApiTags('messages')
 @ApiAuthRequired()

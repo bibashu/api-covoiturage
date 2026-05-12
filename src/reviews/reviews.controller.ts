@@ -11,10 +11,9 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { ReportReviewDto } from './dto/report-review.dto';
 import { ReviewResponseDto, UserRatingSummaryDto } from './dto/review-response.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
-import { Public } from '../auth/decorators/public.decorator';
+
 import { User, UserRole } from '../users/entities/user.entity';
+import { ApiAuthRequired, Public, Roles } from '../auth/decorators/auth.decorators';
 
 @ApiTags('reviews')
 @ApiAuthRequired()

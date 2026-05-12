@@ -7,14 +7,12 @@ import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 export interface JwtPayload {
-  sub: string;
-  email: string;
-  role: string;
-  iat?: number;
-  exp?: number;
+  sub:    string;
+  phone:  string;
+  role:   string;
+  status: string;
 }
 
-@Injectable()
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
@@ -22,28 +20,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) {
-    const secret = config.get<string>('JWT_SECRET');
-
-    if (!secret) {
-      throw new Error('JWT_SECRET is missing');
-    }
-
+    const jwtSecret = config.get<string>('JWT_SECRET');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret,
+      secretOrKey: jwtSecret || '',
     });
   }
 
   async validate(payload: JwtPayload): Promise<User> {
     const user = await this.userRepo.findOne({
-      where: { id: payload.sub },
+      where: { id: payload.sub, isActive: true },
     });
-
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Token invalide');
-    }
-
+    if (!user) throw new UnauthorizedException('Token invalide.');
     return user;
   }
 }

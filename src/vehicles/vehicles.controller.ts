@@ -23,14 +23,14 @@ import {
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiAuthRequired } from '../auth/decorators/api-auth.decorator';
+
 import { User, UserRole } from '../users/entities/user.entity';
 import { multerConfig } from '../common/cloudinary/multer.config';
 import { CreateVehicleDto } from './dto/create-vehicule,dto';
 import { VehicleResponseDto } from './dto/vehicule-response.dto';
 import { VehiclesService } from './vehicles.service';
 import { UpdateVehicleDto } from './dto/update-vehicule.dto';
+import { ApiAuthRequired, Roles } from '../auth/decorators/auth.decorators';
 
 @ApiTags('vehicles')
 @ApiAuthRequired()

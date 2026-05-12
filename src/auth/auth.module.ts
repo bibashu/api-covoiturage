@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -10,7 +10,9 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ProfileCompleteGuard } from './guards/profile-complete.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { User } from '../users/entities/user.entity';
 
 @Module({
@@ -25,20 +27,17 @@ import { User } from '../users/entities/user.entity';
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '15m') },
       }),
     }),
+    WhatsAppModule,
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
+    // Guards globaux — toutes les routes sont protégées par défaut
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: ProfileCompleteGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
   exports: [AuthService, JwtModule],
 })

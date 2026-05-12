@@ -1,50 +1,66 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  BeforeInsert,
-  BeforeUpdate,
+  Entity, PrimaryGeneratedColumn, Column,
+  CreateDateColumn, UpdateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import * as bcrypt from 'bcrypt';
 
 export enum UserRole {
-  DRIVER = 'driver',
+  DRIVER    = 'driver',
   PASSENGER = 'passenger',
-  BOTH = 'both',
-  ADMIN = 'admin',
+  BOTH      = 'both',
+  ADMIN     = 'admin',
+}
+
+export enum UserStatus {
+  PENDING   = 'pending',   // numéro enregistré, OTP non vérifié OU profil incomplet
+  ACTIVE    = 'active',    // profil complet, accès total
+  SUSPENDED = 'suspended',
 }
 
 @Entity('users')
 export class User {
-  @ApiProperty({ example: 'uuid-v4' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ApiProperty({ example: 'Moussa' })
-  @Column({ type: 'varchar', length: 100 })
-  firstName!: string;
-
-  @ApiProperty({ example: 'Diallo' })
-  @Column({ type: 'varchar', length: 100 })
-  lastName!: string;
-
-  @ApiProperty({ example: 'moussa@example.com' })
-  @Column({ type: 'varchar', unique: true, length: 255 })
-  email!: string;
-
-  @Exclude()
-  @Column({ type: 'varchar' })
-  password!: string;
-
-  @ApiProperty({ example: '+221770000000', nullable: true })
-  @Column({ type: 'varchar', nullable: true, length: 20, default: null })
+  // ── Étape 1 : seul le téléphone est requis ─────────────────────────────
+  @Column({ type: 'varchar', unique: true, length: 20 })
   phone!: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/...', nullable: true })
+  // ── Étape 3 : nom + prénom ─────────────────────────────────────────────
+  @Column({ type: 'varchar', length: 100, nullable: true, default: null })
+  firstName!: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true, default: null })
+  lastName!: string;
+
+  // ── OTP ────────────────────────────────────────────────────────────────
+  @Exclude()
+  @Column({ type: 'varchar', nullable: true, default: null })
+  otpCode!: string;
+
+  @Exclude()
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  otpExpiresAt!: Date;
+
+  @Exclude()
+  @Column({ type: 'int', default: 0 })
+  otpAttempts!: number;
+
+  @Exclude()
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  otpBlockedUntil!: Date;
+
+  // ── Statut & rôle ──────────────────────────────────────────────────────
+  @Column({ type: 'enum', enum: UserStatus, default: UserStatus.PENDING })
+  status!: UserStatus;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.BOTH })
+  role!: UserRole;
+
+  @Column({ type: 'boolean', default: true })
+  isActive!: boolean;
+
+  // ── Photo ──────────────────────────────────────────────────────────────
   @Column({ type: 'varchar', nullable: true, default: null })
   photoUrl!: string;
 
@@ -52,52 +68,39 @@ export class User {
   @Column({ type: 'varchar', nullable: true, default: null })
   photoPublicId!: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.BOTH })
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.BOTH })
-  role!: UserRole;
-
-  @ApiProperty({ example: 4.8 })
+  // ── Notes ──────────────────────────────────────────────────────────────
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
   averageRating!: number;
 
-  @ApiProperty({ example: 12 })
   @Column({ type: 'int', default: 0 })
   totalRatings!: number;
 
-  @ApiProperty({ example: false })
-  @Column({ type: 'boolean', default: false })
-  isVerified!: boolean;
-
-  @ApiProperty({ example: true })
-  @Column({ type: 'boolean', default: true })
-  isActive!: boolean;
-
+  // ── Tokens ─────────────────────────────────────────────────────────────
   @Exclude()
   @Column({ type: 'varchar', nullable: true, default: null })
   refreshToken!: string;
 
-  @CreateDateColumn()
-  createdAt!: Date;
-
   @Column({ type: 'varchar', nullable: true, default: null })
   fcmToken!: string;
+
+  @CreateDateColumn()
+  createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @BeforeInsert()
-  @BeforeUpdate()
-  async hashPassword() {
-    if (this.password) {
-      this.password = await bcrypt.hash(this.password, 12);
-    }
-  }
-
-  async validatePassword(plain: string): Promise<boolean> {
-    return bcrypt.compare(plain, this.password);
-  }
-
+  // ── Computed ───────────────────────────────────────────────────────────
   get fullName(): string {
-    return `${this.firstName} ${this.lastName}`;
+    return this.firstName && this.lastName
+      ? `${this.firstName} ${this.lastName}`
+      : this.phone;
+  }
+
+  get isProfileComplete(): boolean {
+    return !!(
+      this.firstName &&
+      this.lastName &&
+      this.status === UserStatus.ACTIVE
+    );
   }
 }
