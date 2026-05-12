@@ -27,22 +27,26 @@ import { Notification } from './notifications/entities/notification.entity';
     ConfigModule.forRoot({ isGlobal: true }),
 
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule], 
-
+      imports: [ConfigModule],
       inject: [ConfigService],
-
       useFactory: (configService: ConfigService) => {
-     
+        const dbUrl = configService.get<string>('DATABASE_URL');
+
         return {
           type: 'postgres',
+          url: dbUrl,
 
-          host: configService.get('DB_HOST'),
-          port: parseInt(configService.get('DB_PORT') ?? '5432'),
-          username: configService.get('DB_USERNAME'),
-          password: configService.get('DB_PASSWORD'),
-          database: configService.get('DB_NAME'),
-
-          entities: [User, Vehicle, Trip, Booking, Payment, Review, Message, TripStop, Notification],
+          entities: [
+            User,
+            Vehicle,
+            Trip,
+            Booking,
+            Payment,
+            Review,
+            Message,
+            TripStop,
+            Notification,
+          ],
 
           synchronize: configService.get('NODE_ENV') !== 'production',
           logging: configService.get('NODE_ENV') === 'development',
